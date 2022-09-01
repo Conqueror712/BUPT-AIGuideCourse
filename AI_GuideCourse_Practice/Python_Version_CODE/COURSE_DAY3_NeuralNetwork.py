@@ -1,82 +1,100 @@
-# 基于numpy构建简单的三层回归神经网络
-# 反向传播网络
-# 梯度下降法进行神经网络的权值更新
-
-# 输入和输出只有一个神经元 中间隐藏层可设置N个 sigmoid激活函数 随机噪声构建数据集
-# 下面是代码：
 import numpy as np
 import matplotlib.pyplot as plt
 
 
-# 激活函数的梯度
+def func_forward(x, w, b=None):
+    assert x.shape[1] == w.shape[0]
+    if b is None:
+        return np.matmul(x, w)
+    assert w.shape[1] == b.shape[0]
+    return np.matmul(x, w) + b
 
 
-def sigmoid_derivative(s):
-    ds = s * (1 - s)
-    return ds
+def func_backward(x, w, z_grad):
+    assert z_grad.shape[0] == x.shape[0]
+    assert z_grad.shape[1] == w.shape[1]
+
+    x_grad = z_grad @ w.T
+    w_grad = x.T @ z_grad / x.shape[0]
+    b_grad = np.mean(z_grad, axis=0)
+
+    return x_grad, w_grad, b_grad
 
 
-# 激活函数的定义
+def relu_forward(z):
+    return z * (z > 0)
 
 
-def sigmoid(x):
-    s = 1 / (1 + np.exp(-x))
-    return s
+def relu_backward(z, a_grad):
+    return a_grad * (z > 0)
 
 
-'''
-N是batch的大小
-D_in是输入的维度
-H是隐藏的维度
-D_out是输出的维度
-'''
+def func_compute_loss_grad(y_true, y_pred):
+    assert y_true.shape == y_pred.shape
+    return 2 * (y_pred - y_true)
 
-N, D_in, H, D_out = 20, 1, 128, 1
 
-np.random.seed(0)
-# arange用于生成数组，在给定间隔内返回均匀间隔的值
-# numpy.arange(n).reshape(a, b)用于依次生成n个自然数，并且以a行b列的数组形式显示
-x = np.arange(0, N, 1).reshape(N, D_in) * 10  # 20 * 1
-y = x + np.random.randn(N, D_out)  # 20 * 1
+def func_update(params, grads, learning_rate=1e-2):
+    assert isinstance(params, list)
+    for i in range(len(params)):
+        params[i] -= learning_rate * grads[i]
+    # return params
 
-# Randomly initialize weights
 
-w1 = np.random.randn(D_in, H)  # 1 * 64
-w2 = np.random.randn(H, D_out)  # 64 * 1
-learning_rate = 1e-3
-# Forward pass: 计算预测的y值
-for t in range(20000):
-    h = x.dot(w1)
-    h_relu = sigmoid(h)
-    y_pred = h_relu.dot(w2)
+# def sigmoid_derivative(s):
+#     ds = s * (1 - s)
+#     return ds
+#
+# def ReLU_derivative(s):
+#     ds = s * (1 - s)
+#     return ds
+#
+
+# def sigmoid(x):
+#     s = 1 / (1 + np.exp(-x))
+#     return s
+#
+#
+# def ReLU(x):
+#     if (x > 0):
+#         return x
+#     else:
+#         return 0
+#
+
+
+# Initialize
+
+x = np.linspace(-1, 1, 1000).reshape((1000, 1))
+y_true = x ** 2 + 2 + np.random.normal(0, 0.1, (1000, 1))
+
+w1 = np.random.normal(0, 0.1, (1, 100))
+w2 = np.random.normal(0, 0.1, (100, 1))
+b1 = np.zeros((100,))
+b2 = np.zeros((1,))
+learning_rate = 1e-1
+for t in range(1000):
+    # Forward
+    z = func_forward(x, w1, b1)
+    a = relu_forward(z)
+    y_pred = func_forward(a, w2, b2)
 
     # 损失计算
+    loss = func_compute_loss_grad(y_true, y_pred)
 
-    loss = np.square(y_pred - y).sum()
-
-    # 反向传播计算w1 w2的关于损失的梯度
-
-    grad_y_pred = 2.0 * (y_pred - y)
-    grad_w2 = h_relu.T.dot(grad_y_pred)
-    grad_h = grad_y_pred.dot(w2.T)  # [N, H] = [N, 1] * [1, H]
-    grad_h = grad_h * sigmoid_derivative(h_relu)  # [N, H] = [N, H] . [N, H]]
-    grad_w1 = x.T.dot(grad_h)  # [1, H] = [1, N] * {N, H}
+    # Backward
+    pred_grad = func_compute_loss_grad(y_true, y_pred)
+    a_grad, w2_grad, b2_grad = func_backward(a, w2, pred_grad)
+    z_grad = relu_backward(z, a_grad)
+    _, w1_grad, b1_grad = func_backward(x, w1, z_grad)
 
     # 更新权值
+    params = [w1, w2, b1, b2]
+    grads = [w1_grad, w2_grad, b1_grad, b2_grad]
+    func_update(params, grads, learning_rate)
 
-    w1 -= learning_rate * grad_w1
-    w2 -= learning_rate * grad_w2
-
-    if (t % 4000 == 0):
-        plt.cla()
-        plt.scatter(x, y)
-        plt.scatter(x, y_pred)
+    if (t % 100 == 0):
+        plt.scatter(x, y_true, 20)
         plt.plot(x, y_pred, 'r-', lw=1, label="plot figure")
-        plt.text(0.5, 0, 't=%d:Loss=%.4f' % (t, loss), fontdict={'size': 20, 'color': 'red'})
+        # plt.text(0, 2, "Loss %.4f" % loss, fontdict={'size': 20, 'color': 'red'})
         plt.show()
-
-'''
-运行代码，观察效果
-修改不同参数，如学习率，循环次数，回归函数修改（如 y=x2），观察效果。
-思考：代码中的激活函数采用的是 sigmoid 函数，试修改为 ReLU 函数，观察效果。    
-'''

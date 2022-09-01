@@ -30,29 +30,29 @@ y = torch.cat((y0, y1), ).type(torch.LongTensor)  # shape (200,) LongTensor = 64
 class Net(torch.nn.Module):
     def __init__(self, n_feature, n_hidden, n_output):
         super(Net, self).__init__()
-        self.hidden = torch.nn.Linear(n_feature, n_hidden)  # hidden layer
-        self.out = torch.nn.Linear(n_hidden, n_output)  # output layer
+        self.hidden = torch.nn.Linear(n_feature, n_hidden)  # hidden layer隐藏层
+        self.out = torch.nn.Linear(n_hidden, n_output)  # output layer输出层
 
     def forward(self, x):
-        x = torch.sigmoid(self.hidden(x))  # activation function for hidden layer
+        x = torch.sigmoid(self.hidden(x))  # activation function for hidden layer隐层激活函数
 
         x = self.out(x)
         return x
 
 
-net = Net(n_feature=2, n_hidden=10, n_output=2)  # define the network
-print(net)  # net architecture
-optimizer = torch.optim.SGD(net.parameters(), lr=0.02)
+net = Net(n_feature=2, n_hidden=10, n_output=2)  # define the networkd定义网路
+print(net)
+optimizer = torch.optim.SGD(net.parameters(), lr=0.01)
 loss_func = torch.nn.CrossEntropyLoss()  # the target label is NOT an one-hotted
-plt.ion()  # something about
+plt.ion()
 
 for t in range(100):
-    out = net(x)  # input x and predict based on x
+    out = net(x)  # 输入x，根据x进行预测
     loss = loss_func(out, y)  # must be (1. nn output, 2. target), the target label is NOTone-hotted
-    optimizer.zero_grad()  # clear gradients for next train
-    loss.backward()  # backpropagation, compute gradients
-    optimizer.step()  # apply gradients
-    if t % 2 == 0:  # plot and show learning process
+    optimizer.zero_grad()  # 梯度clear
+    loss.backward()  # 反向传播 计算梯度
+    optimizer.step()  # 应用梯度
+    if t % 2 == 0:  # 学习过程展示
         plt.cla()
         prediction = torch.max(out, 1)[1]
         pred_y = prediction.data.numpy()
