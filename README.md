@@ -4,5 +4,5 @@
 
 ---
 
-Welcome to my blog: [落雨乄天珀夜 (gitee.io)](https://conqueror712.gitee.io/conqueror712.gitee.io/)
+Welcome to my blog: https://conqueror712.github.io/
 
