@@ -1,4 +1,4 @@
-# **BUPT - AI Guide Course Practice - 2022.08**
+  # **BUPT - 人工智能导论实践课程项目 - 2022.08**
 
 ---
 
